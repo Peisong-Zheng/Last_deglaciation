@@ -175,6 +175,7 @@ import numpy as np
 def plot_labels(ds):
     sat_label = ds['class_label']
 
+    colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
     # create a figure and axis
     fig, ax = plt.subplots(figsize=(10, 5), subplot_kw=dict(projection=ccrs.PlateCarree()),dpi=300)
 
@@ -287,6 +288,9 @@ def plot_all_label_at_sequence(ds,variable='sat',plot_class=False):
     nrow=len(np.unique(sat_label))
     fig = plt.figure(figsize=(16, 5*nrow),dpi=300)
 
+    colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
+    
+
     for i in np.unique(ds['sequence']):
         label2plot=sequence_class_age[i][1]
         # add coastline and gridlines
@@ -297,7 +301,7 @@ def plot_all_label_at_sequence(ds,variable='sat',plot_class=False):
         # plot heatmap
         # colors = list(mcolors.TABLEAU_COLORS.values())
         # colors = colors[1:len(np.unique(sat_label))+1]
-        colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
+        
         cmap = mcolors.ListedColormap(['#ffffff', colors[label2plot]])
         im = ax.pcolormesh(ds.lon, ds.lat, sat_label==label2plot, transform=ccrs.PlateCarree(), cmap=cmap, shading='auto')   
         ax.set_xticks([-180, -120, -60, 0, 60, 120, 180], crs=ccrs.PlateCarree())
