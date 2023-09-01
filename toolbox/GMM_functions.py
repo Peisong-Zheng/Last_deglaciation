@@ -162,7 +162,67 @@ def fit_gmm(ds_sat, variable='sat',n_pc=2, n_components=3):
     plt.show()
 
     #################################################################################################
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from scipy.stats import zscore
+import numpy as np
+from sklearn.mixture import GaussianMixture
+import xarray as xr
+import matplotlib.pyplot as plt
 
+
+def GMM4EOFS(data, ds_sat,n_components=4):
+    colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
+
+    # n_components=5
+    sat_shape=ds_sat['sat'].shape
+
+    # create a 2D GMM model
+    gmm_model = GaussianMixture(n_components=n_components, covariance_type='full')
+
+    # fit the model to the two columns of PCA scores
+    gmm_model.fit(data)
+
+    # get the predicted class labels for each data point
+    class_labels = gmm_model.predict(data)
+
+    # new_ds=ds_sat.copy()
+    # add the class labels to the xarray dataset
+    ds=ds_sat.copy()
+    ds['class_label'] = (('lat', 'lon'), class_labels.reshape(sat_shape[1], sat_shape[2]))
+
+    # plot the results
+    fig, ax = plt.subplots(1, 2, figsize=(8, 4), dpi=300)
+
+    # plot the scatter plot of the two columns
+    for i in range(n_components):
+        mask = class_labels == i
+        # ax[0].scatter(sat_scores[:, 0][mask], sat_scores[:, 1][mask], s=10, alpha=0.5, color=colors[i % len(colors)])
+        ax[0].scatter(data[:, 0][mask], data[:, 1][mask], s=10, alpha=0.5, color=colors[i])
+
+    # plot the contour plot of the fitted GMM
+    x, y = np.meshgrid(np.linspace(np.min(data[:, 0]), np.max(data[:, 0]), 100),
+                        np.linspace(np.min(data[:, 1]), np.max(data[:, 1]), 100))
+    XX = np.array([x.ravel(), y.ravel()]).T
+    Z = -gmm_model.score_samples(XX)
+    Z = Z.reshape(x.shape)
+    ax[1].contour(x, y, Z, cmap='coolwarm_r')
+
+    # Add labels and title
+    ax[0].set_xlabel('EOF 1')
+    ax[0].set_ylabel('EOF 2')
+    ax[1].set_xlabel('EOF 1')
+    ax[1].set_ylabel('EOF 2')
+    ax[0].set_title('Scatter plot of loadings')
+    ax[1].set_title('Contour plot of fitted GMM')
+
+    plt.tight_layout()
+    plt.show()
+
+    return ds
+
+###########################################################################################
 # function to plot the class labels on a map
 
 import xarray as xr
