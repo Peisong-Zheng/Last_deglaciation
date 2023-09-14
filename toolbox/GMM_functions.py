@@ -340,7 +340,7 @@ import cartopy.feature as cfeature
 import numpy as np
 
 
-def plot_all_label_at_sequence(ds,variable='sat',plot_class=False):
+def plot_all_label_at_sequence(ds,variable='sat',method='min',plot_class=False):
     ds,sequence_class_age=find_labels_transition(ds,variable=variable)
     sequence_label = ds['sequence']
     sat_label = ds['class_label']
@@ -385,11 +385,17 @@ def plot_all_label_at_sequence(ds,variable='sat',plot_class=False):
         weight=ds['weight'].where(label_mask)
         label_sat=label_sat*weight
 
+        # Calculate the weighted average
         label_sat_average = label_sat.sum(dim=('lat', 'lon'))/weight.sum(dim=('lat', 'lon'))
         
+        if method=='min':
+            min_age = ds['age'].isel(age=label_sat_average.argmin(dim='age'))
+            min_sat = label_sat_average.min(dim='age')
 
-        min_age = ds['age'].isel(age=label_sat_average.argmin(dim='age'))
-        min_sat = label_sat_average.min(dim='age')
+        if method=='b':
+            min_age=find_cp_B(label_sat_average,data_end=int(ds['age'][-1].values))
+            # get he sat on the label_sat_average
+ 
 
         # create axis for the second plot
         ax1 = fig.add_subplot(nrow, 2, 2*i+2)
@@ -434,6 +440,22 @@ def plot_all_label_at_sequence(ds,variable='sat',plot_class=False):
     plt.show()
 
 
+# Bayesian changepoint detection
+
+import Rbeast as rb
+def find_cp_B(data,flip=True,plot=False,data_end=23900):
+    if flip:
+        data=data[::-1]
+
+
+    o = rb.beast(data, start=0,season='none')
+    if plot:
+        rb.plot(o)
+
+    cp=o.trend.cp[0]
+    cp=data_end-cp*200
+
+    return cp # reture the CP that corresponds to heighest probability
 
 
 
