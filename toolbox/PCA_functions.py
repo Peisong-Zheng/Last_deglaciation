@@ -152,7 +152,7 @@ def plot_pcs(age, pcs, variance_explained):
     if len(variance_explained) < 2:
         raise ValueError("The input 'variance_explained' must have at least 2 values.")
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(6, 4), dpi=300)
 
     ax.plot(age, -1 * pcs[:, 0], label='PC1, v_exp={:.2f}'.format(variance_explained[0]))
     ax.plot(age, pcs[:, 1], label='PC2, v_exp={:.2f}'.format(variance_explained[1]))

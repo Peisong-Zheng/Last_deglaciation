@@ -146,9 +146,14 @@ def plot_weighted_average_curve(ds, label_var_name='class_label',dpi=100):
 
         weighted_avg_sat = sum_weighted_sat / sum_weight_sat
         weighted_avg_curves[class_label] = weighted_avg_sat.data  # Store the weighted average curve
+
         ax.plot(ds['age'], weighted_avg_sat, color=cmap(class_label))
+        # set x limits to match the age
+        ax.set_xlim(ds['age'].min(), ds['age'].max())
         ax.invert_xaxis()
         ax.set_title(f'Class {class_label}')
+
+        age_min=ds['age'].min()
 
         # Add climate transitions timing
         HS1 = np.array([17480, 14692]) - 50  # convert to b1950
@@ -156,12 +161,21 @@ def plot_weighted_average_curve(ds, label_var_name='class_label',dpi=100):
         YD = np.array([12896, 11703]) - 50
 
         for period, name in zip([HS1, BA, YD], ["HS1", "BA", "YD"]):
-            ax.axvline(x=period[0], color='black', linestyle='--')
-            ax.axvline(x=period[1], color='black', linestyle='--')
-            ax.text(period.mean(), np.max(ax.get_ylim()), name, rotation=90, verticalalignment='top')
+            if period[0] >age_min:
+                ax.axvline(x=period[0], color='black', linestyle='--')
+                ax.axvline(x=period[1], color='black', linestyle='--')
+                if period[1] >age_min:
+                    ax.text(period.mean(), np.max(ax.get_ylim()), name, rotation=90, verticalalignment='top')
+            # set the x-lim to match the age
 
         ax.set_xlabel('Age (yr BP)')
         ax.set_ylabel('Weighted Average SAT (°C)')
+        # turn off the x-axis label for all but the bottom subplot
+        if i < nclasses - 1:
+            ax.set_xlabel('')
+        # turn off the x-tick labels for all but the bottom subplot
+        if i < nclasses - 1:
+            ax.set_xticklabels('')
 
     plt.show()
     return weighted_avg_curves
