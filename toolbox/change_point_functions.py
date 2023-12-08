@@ -162,6 +162,102 @@
 
 
 ##############################################################################################
+# import numpy as np
+# import Rbeast as rb
+# import matplotlib.pyplot as plt
+
+# def find_cp(data, age,interval_L_indx=10,rb_plot=False,avg_plot=False,avg_plot_title=None):
+
+#     # cut the data according to interval_L_indx
+#     data=data[interval_L_indx:]
+#     age=age[interval_L_indx:]
+
+
+
+#     # flip the data
+#     data = data[::-1]
+
+#     # start_age = ds_sat_EOFs['age'][-1].values
+#     start_age=age[-1]
+#     # print(start_age)
+
+#     o = rb.beast(data, start=0, season='none')
+#     if rb_plot:
+#         rb.plot(o)
+    
+
+#     cps = o.trend.cp
+#     # remove nan
+#     cps = cps[~np.isnan(cps)]
+
+#     slpSgnPosPr_list = [o.trend.slpSgnPosPr[int(cp)] for cp in cps]
+#     slpSgnZeroPr_list = [o.trend.slpSgnZeroPr[int(cp)] for cp in cps]
+#     slpSgnNegPr_list = 1 - (np.array(slpSgnPosPr_list))
+
+#     # calculate the 5th percentile of the slpSgnPosPr_list
+#     slpSgnPosPr_50th = np.percentile(slpSgnPosPr_list, 50)
+#     # calculate the 5th percentile of the slpSgnNegPr_list
+#     slpSgnNegPr_50th = np.percentile(slpSgnNegPr_list, 50)
+
+#     cp_age_list = [start_age - cp*200 for cp in cps]
+
+#     flag = 'None'
+
+#     # Checking the conditions for the change points
+#     selected_cp_index = None
+#     for i, (pos_pr, neg_pr) in enumerate(zip(slpSgnPosPr_list, slpSgnNegPr_list)):
+#         print('pos_pr',pos_pr)
+#         print('neg_pr',neg_pr)
+#         if (1-pos_pr)>0.8 and neg_pr>0.5: #pos!=1 and neg>=0.05
+#             selected_cp_index = i
+#             flag = 'slope'
+#             break
+
+#     # If no change point satisfies the condition, get the change point with the largest age
+#     if selected_cp_index is None:
+#         selected_cp_index = np.argmax(cp_age_list)
+#         flag = 'maxage'
+
+#     selected_cp_age = cp_age_list[selected_cp_index]
+
+
+#     cpOccPr = o.trend.cpOccPr    
+#     # flip the cpOccPr
+#     cpOccPr = cpOccPr[::-1]
+    
+#     slpSgnPosPr = 1 - o.trend.slpSgnPosPr
+#     slpSgnZeroPr = o.trend.slpSgnZeroPr
+#     # flip the slpSgnPosPr
+#     slpSgnPosPr = slpSgnPosPr[::-1]
+#     slpSgnZeroPr = slpSgnZeroPr[::-1]
+
+
+#     print('flag:', flag)
+
+#     if avg_plot:
+#         # plot the data and age time series
+#         fig, ax = plt.subplots(figsize=(10, 5))
+#         ax.plot(age, data[::-1], color='k', label='data')
+#         ax.axvline(selected_cp_age, color='r', label='change point')
+#         # add text to label the cp age
+#         ax.text(selected_cp_age, np.min(ax.get_ylim()), str(int(selected_cp_age)), fontsize=12, color='r')
+#         ax.set_xlabel('Age (yr BP)')
+#         ax.set_ylabel('Weighted average SAT (°C)')
+#         ax.set_title(avg_plot_title)
+#         # invert the x axis
+#         ax.invert_xaxis()
+
+
+#     output = {
+#     'data_flipped': data[::-1],
+#     'cpOccPr': cpOccPr,
+#     'slpSgnPosPr': slpSgnPosPr,
+#     'slpSgnZeroPr': slpSgnZeroPr,
+#     'cp_age': selected_cp_age,
+#     'age': age,
+#     }
+
+#     return output
 import numpy as np
 import Rbeast as rb
 import matplotlib.pyplot as plt
@@ -173,7 +269,6 @@ def find_cp(data, age,interval_L_indx=10,rb_plot=False,avg_plot=False,avg_plot_t
     age=age[interval_L_indx:]
 
 
-
     # flip the data
     data = data[::-1]
 
@@ -181,7 +276,7 @@ def find_cp(data, age,interval_L_indx=10,rb_plot=False,avg_plot=False,avg_plot_t
     start_age=age[-1]
     # print(start_age)
 
-    o = rb.beast(data, start=0, season='none')
+    o = rb.beast(data, start=0, season='none', options=0, quiet=1)
     if rb_plot:
         rb.plot(o)
     
@@ -189,50 +284,31 @@ def find_cp(data, age,interval_L_indx=10,rb_plot=False,avg_plot=False,avg_plot_t
     cps = o.trend.cp
     # remove nan
     cps = cps[~np.isnan(cps)]
+    # sort the cps
+    cps = np.sort(cps)
 
-    slpSgnPosPr_list = [o.trend.slpSgnPosPr[int(cp)] for cp in cps]
-    slpSgnZeroPr_list = [o.trend.slpSgnZeroPr[int(cp)] for cp in cps]
-    slpSgnNegPr_list = 1 - (np.array(slpSgnPosPr_list))
+    pospr_diff_max_index=np.argmax(np.diff(o.trend.slpSgnPosPr))
+    print('pospr_diff_max_index:', pospr_diff_max_index)
+    print('cps', cps)
 
-    # calculate the 5th percentile of the slpSgnPosPr_list
-    slpSgnPosPr_50th = np.percentile(slpSgnPosPr_list, 50)
-    # calculate the 5th percentile of the slpSgnNegPr_list
-    slpSgnNegPr_50th = np.percentile(slpSgnNegPr_list, 50)
+    # find the closet cp to the pospr_diff_max_index
+    selected_cp_index = np.argmin(np.abs(cps-pospr_diff_max_index))
+    print('selected_cp_index:', selected_cp_index)
 
-    cp_age_list = [start_age - cp*200 for cp in cps]
-
-    flag = 'None'
-
-    # Checking the conditions for the change points
-    selected_cp_index = None
-    for i, (pos_pr, neg_pr) in enumerate(zip(slpSgnPosPr_list, slpSgnNegPr_list)):
-        print('pos_pr',pos_pr)
-        print('neg_pr',neg_pr)
-        if pos_pr!=1 and neg_pr>=0.05:
-            selected_cp_index = i
-            flag = 'slope'
-            break
-
-    # If no change point satisfies the condition, get the change point with the largest age
-    if selected_cp_index is None:
-        selected_cp_index = np.argmax(cp_age_list)
-        flag = 'maxage'
-
-    selected_cp_age = cp_age_list[selected_cp_index]
+    selected_cp_age=start_age - cps[selected_cp_index]*200
+    
 
 
     cpOccPr = o.trend.cpOccPr    
     # flip the cpOccPr
     cpOccPr = cpOccPr[::-1]
     
-    slpSgnPosPr = 1 - o.trend.slpSgnPosPr
+    slpSgnPosPr = o.trend.slpSgnPosPr
     slpSgnZeroPr = o.trend.slpSgnZeroPr
     # flip the slpSgnPosPr
     slpSgnPosPr = slpSgnPosPr[::-1]
     slpSgnZeroPr = slpSgnZeroPr[::-1]
 
-
-    print('flag:', flag)
 
     if avg_plot:
         # plot the data and age time series
@@ -258,7 +334,6 @@ def find_cp(data, age,interval_L_indx=10,rb_plot=False,avg_plot=False,avg_plot_t
     }
 
     return output
-
 ################################################################################################
 def sort_classes_by_cp_age(unsorted_cp):
     """

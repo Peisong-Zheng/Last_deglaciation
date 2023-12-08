@@ -3,6 +3,7 @@ import xarray as xr
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 
 
 def center_data(ds):
@@ -145,6 +146,27 @@ def sat_PCA_sklearn(ds):
 
 
 
+# def plot_pcs(age, pcs, variance_explained):
+#     if pcs.shape[1] < 2:
+#         raise ValueError("The input 'pcs' must have at least 2 columns (principal components).")
+    
+#     if len(variance_explained) < 2:
+#         raise ValueError("The input 'variance_explained' must have at least 2 values.")
+
+#     fig, ax = plt.subplots(figsize=(6, 4), dpi=300)
+
+#     ax.plot(age, -1 * pcs[:, 0], label='PC1, v_exp={:.2f}'.format(variance_explained[0]))
+#     ax.plot(age, pcs[:, 1], label='PC2, v_exp={:.2f}'.format(variance_explained[1]))
+
+#     # reverse the x-axis
+#     ax.invert_xaxis()
+
+#     ax.set_xlabel('age')
+#     ax.set_ylabel('PCs')
+#     ax.legend()
+#     plt.show()
+
+
 def plot_pcs(age, pcs, variance_explained):
     if pcs.shape[1] < 2:
         raise ValueError("The input 'pcs' must have at least 2 columns (principal components).")
@@ -152,18 +174,24 @@ def plot_pcs(age, pcs, variance_explained):
     if len(variance_explained) < 2:
         raise ValueError("The input 'variance_explained' must have at least 2 values.")
 
-    fig, ax = plt.subplots(figsize=(6, 4), dpi=300)
+    fig, ax = plt.subplots(figsize=(4.5, 3), dpi=300)
 
     ax.plot(age, -1 * pcs[:, 0], label='PC1, v_exp={:.2f}'.format(variance_explained[0]))
     ax.plot(age, pcs[:, 1], label='PC2, v_exp={:.2f}'.format(variance_explained[1]))
 
     # reverse the x-axis
     ax.invert_xaxis()
+    # set the linewidth of the box
+    ax.spines['top'].set_linewidth(1.5)
+    ax.spines['right'].set_linewidth(1.5)
+    ax.spines['bottom'].set_linewidth(1.5)
+    ax.spines['left'].set_linewidth(1.5)
 
-    ax.set_xlabel('age')
+    ax.set_xlabel('Age (yr BP)')
     ax.set_ylabel('PCs')
     ax.legend()
     plt.show()
+    return fig, ax
 
 
 
@@ -182,6 +210,7 @@ def plot_eof_scatter(eofs):
 
 
 
+
 def plot_eof_map(eofs, lat, lon):
     if eofs.shape[1] < 2:
         raise ValueError("The input 'eofs' must have at least 2 columns (EOFs).")
@@ -194,13 +223,22 @@ def plot_eof_map(eofs, lat, lon):
     eof2 = eofs[:, 1].reshape(len(lat), len(lon))
 
     # create a figure and axes
-    fig, axs = plt.subplots(2, 1, figsize=(8, 9), subplot_kw=dict(projection=ccrs.Robinson()), dpi=300)
+    fig, axs = plt.subplots(2, 1, figsize=(8, 9), subplot_kw=dict(projection=ccrs.Robinson()), dpi=600)
 
     for i, eof in enumerate([eof1, eof2]):
         ax = axs[i]
         # add coastline and gridlines
         ax.add_feature(cfeature.COASTLINE)
-        ax.gridlines(draw_labels=False)
+
+        # Configure the gridlines
+        gl = ax.gridlines(draw_labels=True, color='gray', alpha=0.5, linestyle='--')
+        gl.top_labels = False
+        gl.right_labels = False
+        gl.xformatter = LONGITUDE_FORMATTER
+        gl.yformatter = LATITUDE_FORMATTER
+
+        # Rotate longitude labels
+        gl.xlabel_style = {'rotation': 90}
 
         # plot heatmap
         cmap = plt.cm.get_cmap('coolwarm')
@@ -212,7 +250,42 @@ def plot_eof_map(eofs, lat, lon):
         cbar.ax.set_ylabel('Loading')
 
     # adjust the space between subplots
-    fig.subplots_adjust(hspace=0.05)
+    fig.subplots_adjust(hspace=0.005)
 
     plt.show()
+    return fig, axs
+
+# def plot_eof_map(eofs, lat, lon):
+#     if eofs.shape[1] < 2:
+#         raise ValueError("The input 'eofs' must have at least 2 columns (EOFs).")
+    
+#     if len(eofs) != len(lat) * len(lon):
+#         raise ValueError("The length of 'eofs' must be equal to len(lat) * len(lon).")
+
+#     # Reshape EOF1 and EOF2 to 2D array
+#     eof1 = eofs[:, 0].reshape(len(lat), len(lon))*-1
+#     eof2 = eofs[:, 1].reshape(len(lat), len(lon))
+
+#     # create a figure and axes
+#     fig, axs = plt.subplots(2, 1, figsize=(8, 9), subplot_kw=dict(projection=ccrs.Robinson()), dpi=300)
+
+#     for i, eof in enumerate([eof1, eof2]):
+#         ax = axs[i]
+#         # add coastline and gridlines
+#         ax.add_feature(cfeature.COASTLINE)
+#         ax.gridlines(draw_labels=False)
+
+#         # plot heatmap
+#         cmap = plt.cm.get_cmap('coolwarm')
+#         im = ax.pcolormesh(lon, lat, eof, transform=ccrs.PlateCarree(), cmap=cmap, vmin=-0.04, vmax=0.04, shading='auto')
+#         ax.set_title(f'EOF{i+1}')
+
+#         # add colorbar
+#         cbar = plt.colorbar(im, ax=ax, orientation='vertical', pad=0.05, shrink=0.5)
+#         cbar.ax.set_ylabel('Loading')
+
+#     # adjust the space between subplots
+#     fig.subplots_adjust(hspace=0.05)
+
+#     plt.show()
 

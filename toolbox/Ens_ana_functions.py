@@ -1,8 +1,9 @@
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.colors import ListedColormap
 
-def plot_ens_labels(labels_Ens, figsize=(10, 6), dpi=300, cmap_name='Accent'):
+def plot_ens_labels(labels_Ens, figsize=(10, 6), dpi=300, panel_label='a'):
     """
     Plots a heatmap of ensemble labels.
 
@@ -15,9 +16,25 @@ def plot_ens_labels(labels_Ens, figsize=(10, 6), dpi=300, cmap_name='Accent'):
     label_matrix = np.vstack(label_arrays)
 
     # Create the heatmap
-    plt.figure(figsize=figsize,dpi=dpi)  # Adjust the figure size as needed
+    fig=plt.figure(figsize=figsize,dpi=dpi)  # Adjust the figure size as needed
     unique_labels = np.unique(label_matrix)
-    cmap = plt.get_cmap(cmap_name, len(unique_labels))
+    
+    if len(unique_labels) <= 4:
+        custom_colors = [
+        (0.4980392156862745, 0.788235294117647, 0.4980392156862745),
+        (0.9921568627450981, 0.7529411764705882, 0.5254901960784314),
+        (0.9411764705882353, 0.00784313725490196, 0.4980392156862745),
+        (0.27450980392156865, 0.5098039215686274, 0.7058823529411765),]
+
+        # Create a ListedColormap object with your custom colors
+        cmap = ListedColormap(custom_colors)   
+    else:
+        cmap = plt.get_cmap('Accent', len(unique_labels))
+    
+    # add panel label
+    plt.text(-0.07, 1.05, panel_label, transform=plt.gca().transAxes, size=16, weight='bold')
+
+    # cmap = plt.get_cmap(cmap_name, len(unique_labels))
 
     # Set colorbar ticks
     boundaries = np.arange(len(unique_labels) + 1) - 0.5
@@ -29,6 +46,7 @@ def plot_ens_labels(labels_Ens, figsize=(10, 6), dpi=300, cmap_name='Accent'):
     plt.ylabel('Ens Index')
 
     plt.show()
+    return fig
 
 # ##########################################################################################
 # import seaborn as sns

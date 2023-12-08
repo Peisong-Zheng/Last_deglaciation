@@ -1,68 +1,3 @@
-# # function to fit a 2D Gaussian mixture model to the 'sat' data variable of an xarray dataset  
-# # #####################################################################################
-# import xarray as xr
-
-
-# def cal_anomalies(ds_sat, years):
-#     """calculate the temperature anomalies by subtracting the mean over the specified years from the 'sat' data variable of an xarray dataset.
-
-#     Parameters
-#     ----------
-#     ds_sat : xarray.Dataset
-#         An xarray dataset containing a 'sat' data variable with dimensions (age, lat, lon).
-#     years : int
-#         The number of years to calculate the mean over.
-
-#     Returns
-#     -------
-#     xarray.Dataset
-#         The updated xarray dataset with a new 'sat_anomalies' data variable.
-#     """
-#     # Select the specified years of the record
-#     ds_years = ds_sat.sel(age=slice(None, years))
-
-#     # Calculate the mean over the specified years
-#     mean_years = ds_years['sat'].mean(dim='age')
-
-#     # Compute the anomalies by subtracting the mean from the 'sat' variable
-#     anomalies_sat = ds_sat['sat'] - mean_years
-
-#     # Add the anomalies as a new data variable in the dataset
-#     ds_sat['sat_anomalies'] = anomalies_sat
-
-#     return ds_sat
-
-# ###############################################################################
-# import numpy as np
-# import xarray as xr
-# import Legacy_code.GMM_functions as gf
-
-# def cal_weighted_anomalies(ds_sat):
-#     """calculate the weighted temperature anomalies by multiplying the 'sat_anomalies' data variable with the weight based on cos(lat).
-#     Parameters
-#     ----------
-#     ds_sat : xarray.Dataset
-#         An xarray dataset containing a 'sat' data variable with dimensions (age, lat, lon).
-        
-#     Returns
-#     -------
-#     xarray.Dataset
-#         The updated xarray dataset with a new 'sat_anomalies_weighted' data variable.
-#     """
-#     ds_sat = cal_anomalies(ds_sat, 2000)
-#     # Calculate the weight based on cos(lat)
-#     weight = np.cos(np.deg2rad(ds_sat['lat']))
-
-#     # Multiply 'sat_anomalies' with the weight
-#     sat_anomalies_weighted = ds_sat['sat_anomalies'] * weight
-
-#     # Add 'sat_anomalies_weighted' as a new data variable in the dataset
-#     ds_sat['sat_anomalies_weighted'] = sat_anomalies_weighted
-
-#     return ds_sat
-
-  
-# ################################################################################
 # import pandas as pd
 # from sklearn.preprocessing import StandardScaler
 # from sklearn.decomposition import PCA
@@ -72,66 +7,30 @@
 # import xarray as xr
 # import matplotlib.pyplot as plt
 
-# colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
 
-# def fit_gmm(ds_sat, variable='sat',n_pc=2, n_components=3):
-#     """Fit a 2D Gaussian mixture model to the 'sat' data variable of an xarray dataset.
+# def GMM4EOFS(data, ds_sat,n_components=4):
+#     # colors = ['blue', 'pink', 'green', 'orange', 'purple', 'brown', 'red', 'gray', 'olive', 'cyan']
 
-#     Parameters
-#     ----------
-#     ds_sat : xarray.Dataset
-#         An xarray dataset containing a 'sat' data variable with dimensions (age, lat, lon).
-#     n_pc : int
-#         Number of principal components to retain after PCA
-#     n_components : int
-#         Number of components in the Gaussian mixture model
-
-#     Returns
-#     -------
-#     xarray.Dataset
-#         The updated xarray dataset with a new 'class_label' data variable.
-
-#     """
-#     if n_components > 10:
-#         raise ValueError('n_components cannot be greater than 10, otherwise the colors will repeat.')
-    
-#     ds_sat = cal_weighted_anomalies(ds_sat)
-#     # ds_sat = cal_anomalies(ds_sat, 2000)
-
-#     # get all the sat from ds_sat and put it to a ndarray
-#     # sat = ds_sat['sat'].values
-#     # sat = ds_sat['sat_anomalies_weighted'].values
-#     sat = ds_sat[variable].values
-
-#     sat_shape = sat.shape
-
-#     # reshape the sat to a 2D array
-#     sat = sat.reshape(sat_shape[0], sat_shape[1]*sat_shape[2])
-#     sat = sat.T
-
-#     # Normalize the data
-#     scaler = StandardScaler()
-#     sat_scaled = scaler.fit_transform(sat)
-
-#     # PCA
-#     pca_sat = PCA(n_components=n_pc)
-#     columns = [f'pc {i}' for i in range(1, n_pc+1)]
-#     PCs = pca_sat.fit_transform(sat_scaled.T)
-
-#     # calculate the PCA scores for the original unscaled data
-#     sat_scores = sat_scaled.dot(zscore(PCs))
+#     # n_components=5
+#     sat_shape=ds_sat['sat'].shape
 
 #     # create a 2D GMM model
 #     gmm_model = GaussianMixture(n_components=n_components, covariance_type='full')
 
 #     # fit the model to the two columns of PCA scores
-#     gmm_model.fit(sat_scores)
+#     gmm_model.fit(data)
 
 #     # get the predicted class labels for each data point
-#     class_labels = gmm_model.predict(sat_scores)
+#     class_labels = gmm_model.predict(data)
 
+#     # new_ds=ds_sat.copy()
 #     # add the class labels to the xarray dataset
-#     ds_sat['class_label'] = (('lat', 'lon'), class_labels.reshape(sat_shape[1], sat_shape[2]))
+#     ds=ds_sat.copy()
+#     ds['class_label'] = (('lat', 'lon'), class_labels.reshape(sat_shape[1], sat_shape[2]))
+
+#     unique_labels = np.unique(class_labels)
+#     cmap = plt.get_cmap('Accent', len(unique_labels))
+
 
 #     # plot the results
 #     fig, ax = plt.subplots(1, 2, figsize=(8, 4), dpi=300)
@@ -140,28 +39,29 @@
 #     for i in range(n_components):
 #         mask = class_labels == i
 #         # ax[0].scatter(sat_scores[:, 0][mask], sat_scores[:, 1][mask], s=10, alpha=0.5, color=colors[i % len(colors)])
-#         ax[0].scatter(sat_scores[:, 0][mask], sat_scores[:, 1][mask], s=10, alpha=0.5, color=colors[i])
+#         ax[0].scatter(data[:, 0][mask], data[:, 1][mask], s=10, alpha=0.5, color=cmap(i))
 
 #     # plot the contour plot of the fitted GMM
-#     x, y = np.meshgrid(np.linspace(np.min(sat_scores[:, 0]), np.max(sat_scores[:, 0]), 100),
-#                        np.linspace(np.min(sat_scores[:, 1]), np.max(sat_scores[:, 1]), 100))
+#     x, y = np.meshgrid(np.linspace(np.min(data[:, 0]), np.max(data[:, 0]), 100),
+#                         np.linspace(np.min(data[:, 1]), np.max(data[:, 1]), 100))
 #     XX = np.array([x.ravel(), y.ravel()]).T
 #     Z = -gmm_model.score_samples(XX)
 #     Z = Z.reshape(x.shape)
 #     ax[1].contour(x, y, Z, cmap='coolwarm_r')
 
 #     # Add labels and title
-#     ax[0].set_xlabel('PC 1')
-#     ax[0].set_ylabel('PC 2')
-#     ax[1].set_xlabel('PC 1')
-#     ax[1].set_ylabel('PC 2')
-#     ax[0].set_title('Scatter plot of PCA scores')
+#     ax[0].set_xlabel('EOF 1')
+#     ax[0].set_ylabel('EOF 2')
+#     ax[1].set_xlabel('EOF 1')
+#     ax[1].set_ylabel('EOF 2')
+#     ax[0].set_title('Scatter plot of loadings')
 #     ax[1].set_title('Contour plot of fitted GMM')
 
 #     plt.tight_layout()
 #     plt.show()
 
-#################################################################################################
+#     return ds
+
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
@@ -170,11 +70,11 @@ import numpy as np
 from sklearn.mixture import GaussianMixture
 import xarray as xr
 import matplotlib.pyplot as plt
-
+from matplotlib.colors import ListedColormap
 
 def GMM4EOFS(data, ds_sat,n_components=4):
-    colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
-
+    # colors = ['blue', 'pink', 'green', 'orange', 'purple', 'brown', 'red', 'gray', 'olive', 'cyan']
+    # colors=[(127, 201, 127),(190, 174, 212),(253, 192, 134),(255, 255, 153),(56, 108, 176),(240, 2, 127),(191, 91, 23),(102, 102, 102)]
     # n_components=5
     sat_shape=ds_sat['sat'].shape
 
@@ -192,6 +92,19 @@ def GMM4EOFS(data, ds_sat,n_components=4):
     ds=ds_sat.copy()
     ds['class_label'] = (('lat', 'lon'), class_labels.reshape(sat_shape[1], sat_shape[2]))
 
+    unique_labels = np.unique(class_labels)
+    # cmap = plt.get_cmap('Accent', len(unique_labels))
+    custom_colors = [
+    (0.4980392156862745, 0.788235294117647, 0.4980392156862745),
+    (0.9921568627450981, 0.7529411764705882, 0.5254901960784314),
+    (0.9411764705882353, 0.00784313725490196, 0.4980392156862745),
+    (0.27450980392156865, 0.5098039215686274, 0.7058823529411765),
+    (0.4, 0.4, 0.4)]
+
+    # Create a ListedColormap object with your custom colors
+    cmap = ListedColormap(custom_colors)
+
+
     # plot the results
     fig, ax = plt.subplots(1, 2, figsize=(8, 4), dpi=300)
 
@@ -199,7 +112,7 @@ def GMM4EOFS(data, ds_sat,n_components=4):
     for i in range(n_components):
         mask = class_labels == i
         # ax[0].scatter(sat_scores[:, 0][mask], sat_scores[:, 1][mask], s=10, alpha=0.5, color=colors[i % len(colors)])
-        ax[0].scatter(data[:, 0][mask], data[:, 1][mask], s=10, alpha=0.5, color=colors[i])
+        ax[0].scatter(data[:, 0][mask], data[:, 1][mask], s=10, alpha=0.5, color=cmap(i))
 
     # plot the contour plot of the fitted GMM
     x, y = np.meshgrid(np.linspace(np.min(data[:, 0]), np.max(data[:, 0]), 100),
@@ -222,7 +135,8 @@ def GMM4EOFS(data, ds_sat,n_components=4):
 
     return ds
 
-###########################################################################################
+
+###############################################################################################
 # function to plot the class labels on a map
 
 import xarray as xr
@@ -232,377 +146,198 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import numpy as np
 
-def plot_labels(ds):
-    sat_label = ds['class_label']
+def plot_labels(ds,label_var_name='class_label'):
+    sat_label = ds[label_var_name]
 
-    colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
-    # create a figure and axis
-    fig, ax = plt.subplots(figsize=(10, 5), subplot_kw=dict(projection=ccrs.PlateCarree()),dpi=300)
+    # colors = ['blue', 'pink', 'green', 'orange', 'purple', 'brown', 'red', 'gray', 'olive', 'cyan']
+    
+    # create a figure and axis with Robinson projection
+    fig, ax = plt.subplots(figsize=(10, 5), subplot_kw=dict(projection=ccrs.Robinson()), dpi=300)
 
     # add coastline and gridlines
     ax.add_feature(cfeature.COASTLINE)
     ax.gridlines()
 
-    # plot heatmap
-    # cmap = plt.cm.get_cmap('tab20b', len(np.unique(sat_label)))
     # create colormap with unique colors for each class label
-    # colors = list(mcolors.CSS4_COLORS.values())
-    # colors = list(mcolors.TABLEAU_COLORS.values())
-    # print(colors[1:len(np.unique(sat_label))+1])
-    # cmap = mcolors.ListedColormap(colors[1:len(np.unique(sat_label))+1])
-    cmap = mcolors.ListedColormap(colors[0:len(np.unique(sat_label))])
+    # cmap = mcolors.ListedColormap(colors[0:len(np.unique(sat_label))])
+    unique_labels = np.unique(sat_label)
+    # cmap = plt.get_cmap('Accent', len(unique_labels))
 
-    im = ax.pcolormesh(ds.lon, ds.lat, sat_label, transform=ccrs.PlateCarree(), cmap=cmap, shading='auto')
+    if len(unique_labels) <= 4:
+        custom_colors = [
+        (0.4980392156862745, 0.788235294117647, 0.4980392156862745),
+        (0.9921568627450981, 0.7529411764705882, 0.5254901960784314),
+        (0.9411764705882353, 0.00784313725490196, 0.4980392156862745),
+        (0.27450980392156865, 0.5098039215686274, 0.7058823529411765),]
+
+        # Create a ListedColormap object with your custom colors
+        cmap = ListedColormap(custom_colors)   
+    else:
+        cmap = plt.get_cmap('Accent', len(unique_labels))
+    # plot heatmap with Robinson projection
+    im = sat_label.plot(ax=ax, transform=ccrs.PlateCarree(), cmap=cmap, shading='auto', add_colorbar=False)
+
+    # set global extent for Robinson projection
+    ax.set_global()
     
-    ax.set_xticks([-180, -120, -60, 0, 60, 120, 180], crs=ccrs.PlateCarree())
-    ax.set_yticks([-90, -60, -30, 0, 30, 60, 90], crs=ccrs.PlateCarree())
-    # add lon and lat labels
-    ax.set_xlabel('Longitude')
-    ax.set_ylabel('Latitude')
+    # set title
     ax.set_title('Spatial distribution of class labels')
 
     # add colorbar
-    bounds = np.arange(len(np.unique(sat_label))+1) -0.5
+    bounds = np.arange(len(np.unique(sat_label))+1) - 0.5
     ticks = np.arange(len(np.unique(sat_label)))
     cbar = plt.colorbar(im, ax=ax, orientation='vertical', pad=0.05, boundaries=bounds, ticks=ticks)
     cbar.ax.set_yticklabels(np.unique(sat_label))
     cbar.ax.set_ylabel('Class Label')
 
-    # set title and show plot
+    # show plot
     plt.show()
 
-##############################################################################################
-# find the deglacial sequence of each class (label) 
-
-
-import numpy as np
-import xarray as xr
-
-
-# label2plot=[]
-def find_labels_transition(ds,variable='sat'):
-
-    min_age_list=[]
-    labels=[]
-    classlabel_age=[]
-    sequence_class_age=[]
-
-    weight = np.cos(np.deg2rad(ds['lat']))
-    print('shape of the weight:', weight.shape)
-
-    # set weight to 0 if it is smaller than 0
-    weight = xr.where(weight < 0, 0, weight)
-
-    ds['weight']=weight
-
-    ds['transition_age_of_label'] = xr.full_like(ds['sat'].isel(age=0), np.nan)
-    for label in np.unique(ds['class_label']):
-        # label2plot = label
-        label_mask = ds['class_label'] == label
-        label_sat = ds[variable].where(label_mask)
-
-        weight=ds['weight'].where(label_mask)
-        label_sat=label_sat*weight
-
-        label_sat_average = label_sat.sum(dim=('lat', 'lon'))/weight.sum(dim=('lat', 'lon'))
-        
-        min_age = ds['age'].isel(age=label_sat_average.argmin(dim='age'))
-        # min_sat = label_sat_average.min(dim='age')
-        min_age_list.append(min_age.values)
-        labels.append(label)
-        classlabel_age.append([label,min_age.values])
-        
-        age_min_sat = xr.where(label_mask, min_age, np.nan)
-        ds['transition_age_of_label'] = ds['transition_age_of_label'].where(~label_mask, age_min_sat)
-
-    # compute sequence
-    classlabel_age.sort(key=lambda x: x[1], reverse=True)
-    ds['sequence'] = xr.full_like(ds['sat'].isel(age=0), np.nan)
-    #min_age_list = np.unique(ds['transition_age_of_label'].values[~np.isnan(ds['transition_age_of_label'].values)])
-    # min_age_list.sort()
-    # print(min_age_list)
-    for i in range(len(classlabel_age)):#enumerate(np.unique(ds['class_label'])):
-        label_mask = ds['class_label'] == classlabel_age[i][0]
-        sequence_class_age.append([i,classlabel_age[i][0],classlabel_age[i][1]])
-        ds['sequence'] = xr.where(label_mask, i, ds['sequence'])
-    ds['sequence'] = ds['sequence'].fillna(-2147483648).astype(int)
-
-    return ds,sequence_class_age
-
-##############################################################################################
-# function to plot the class labels on a map
-
-import xarray as xr
+###############################################################################################
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import numpy as np
 
+def plot_weighted_average_curve(ds, label_var_name='class_label',dpi=100):
+    unique_classes = np.unique(ds[label_var_name].values)
+    nclasses = len(unique_classes)
 
-def plot_all_label_at_sequence(ds,variable='sat',method='min',plot_class=False):
-    ds,sequence_class_age=find_labels_transition(ds,variable=variable)
-    sequence_label = ds['sequence']
-    sat_label = ds['class_label']
-    # create a figure and axis
-    nrow=len(np.unique(sat_label))
-    fig = plt.figure(figsize=(16, 5*nrow),dpi=300)
+    if nclasses <= 4:
+        custom_colors = [
+        (0.4980392156862745, 0.788235294117647, 0.4980392156862745),
+        (0.9921568627450981, 0.7529411764705882, 0.5254901960784314),
+        (0.9411764705882353, 0.00784313725490196, 0.4980392156862745),
+        (0.27450980392156865, 0.5098039215686274, 0.7058823529411765),]
 
-    colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
-    
+        # Create a ListedColormap object with your custom colors
+        cmap = ListedColormap(custom_colors)   
+    else:
+        cmap = plt.get_cmap('Accent', len(nclasses))
 
-    for i in np.unique(ds['sequence']):
-        label2plot=sequence_class_age[i][1]
-        # add coastline and gridlines
-        ax = fig.add_subplot(nrow, 2, 2*i+1, projection=ccrs.PlateCarree())
+    fig = plt.figure(figsize=(5, 3 * nclasses), constrained_layout=True, dpi=dpi)
+
+    spec = fig.add_gridspec(ncols=2, nrows=nclasses, width_ratios=[1, 2])
+
+    weighted_avg_curves = {}
+
+    for i, class_label in enumerate(unique_classes):
+        class_mask = ds[label_var_name] == class_label
+
+        # Spatial Distribution Plot
+        ax = fig.add_subplot(spec[i, 0], projection=ccrs.Robinson())
         ax.add_feature(cfeature.COASTLINE)
-        ax.gridlines()
+        ds[label_var_name].where(class_mask).plot(ax=ax, transform=ccrs.PlateCarree(),
+                                                  cmap=cmap, vmin=0, vmax=nclasses,
+                                                  add_colorbar=False)
 
-        # plot heatmap
-        # colors = list(mcolors.TABLEAU_COLORS.values())
-        # colors = colors[1:len(np.unique(sat_label))+1]
+        # Weighted Average SAT Curve
+        ax = fig.add_subplot(spec[i, 1])
+        ds_subset = ds.where(class_mask, drop=True)
         
-        cmap = mcolors.ListedColormap(['#ffffff', colors[label2plot]])
-        im = ax.pcolormesh(ds.lon, ds.lat, sat_label==label2plot, transform=ccrs.PlateCarree(), cmap=cmap, shading='auto')   
-        ax.set_xticks([-180, -120, -60, 0, 60, 120, 180], crs=ccrs.PlateCarree())
-        ax.set_yticks([-90, -60, -30, 0, 30, 60, 90], crs=ccrs.PlateCarree())
-        # add lon and lat labels
-        ax.set_xlabel('Longitude')
-        ax.set_ylabel('Latitude')
-        ax.set_title(f'Sequence Label: {str(sequence_class_age[i][0])}, Class label: {str(sequence_class_age[i][1])}, Age of transition: {str(int(sequence_class_age[i][2]))}')
+        weights_broadcasted = ds_subset['weight'].broadcast_like(ds_subset['sat'])
+        sum_weighted_sat = (ds_subset['sat'] * weights_broadcasted).sum(dim=['lat', 'lon'])
+        sum_weight_sat = weights_broadcasted.sum(dim=['lat', 'lon'])
 
+        weighted_avg_sat = sum_weighted_sat / sum_weight_sat
+        weighted_avg_curves[class_label] = weighted_avg_sat.data  # Store the weighted average curve
 
-    ##########################################
-    # calculate average sat data for each label
+        ax.plot(ds['age'], weighted_avg_sat, color=cmap(class_label))
+        # set x limits to match the age
+        ax.set_xlim(ds['age'].min(), ds['age'].max())
+        ax.invert_xaxis()
+        ax.set_title(f'Class {class_label}')
 
-        # label_mask = ds['class_label'] == label2plot
-        # label_sat = ds[variable].where(label_mask)
-        # label_sat_average = label_sat.mean(dim=('lat', 'lon'))
+        age_min=ds['age'].min()
 
-        label_mask = ds['class_label'] == label2plot
-        label_sat = ds[variable].where(label_mask)
+        # Add climate transitions timing
+        HS1 = np.array([17480, 14692]) - 50  # convert to b1950
+        BA = np.array([14692, 12896]) - 50
+        YD = np.array([12896, 11703]) - 50
 
-        weight=ds['weight'].where(label_mask)
-        label_sat=label_sat*weight
+        for period, name in zip([HS1, BA, YD], ["HS1", "BA", "YD"]):
+            if period[0] >age_min:
+                ax.axvline(x=period[0], color='black', linestyle='--')
+                ax.axvline(x=period[1], color='black', linestyle='--')
+                if period[1] >age_min:
+                    ax.text(period.mean()+280, np.max(ax.get_ylim()), name, rotation=90, verticalalignment='top')
+            # set the x-lim to match the age
 
-        # Calculate the weighted average
-        label_sat_average = label_sat.sum(dim=('lat', 'lon'))/weight.sum(dim=('lat', 'lon'))
-        
-        if method=='min':
-            min_age = ds['age'].isel(age=label_sat_average.argmin(dim='age'))
-            min_sat = label_sat_average.min(dim='age')
-
-        if method=='b':
-            min_age=find_cp_B(label_sat_average,data_end=int(ds['age'][-1].values))
-            # get he sat on the label_sat_average
- 
-
-        # create axis for the second plot
-        ax1 = fig.add_subplot(nrow, 2, 2*i+2)
-
-        # timing for climate transitions, data from Rasmussen et al., 2014, in b2k
-        HS1=np.array([17480,14692])-50 # convert to b1950
-        BA=np.array([14692,12896])-50
-        YD=np.array([12896,11703])-50
-
-        # plot the timing of climate transitions using vertical lines
-        ax1.axvline(x=HS1[0],color='black',linestyle='--') # HS1
-        ax1.axvline(x=HS1[1],color='black',linestyle='--') # HS1
-
-        ax1.axvline(x=BA[0],color='black',linestyle='--') # BA
-        ax1.axvline(x=BA[1],color='black',linestyle='--') # BA
-
-        ax1.axvline(x=YD[0],color='black',linestyle='--') # YD
-        ax1.axvline(x=YD[1],color='black',linestyle='--') # YD
-
-        if plot_class:
-            # plot all sat data in the same label as light grey lines
-            # reshape the label_sat to a 2D array
-            label_sat = label_sat.values
-            label_sat = label_sat.reshape(label_sat.shape[0], label_sat.shape[1]*label_sat.shape[2])
-            print(label_sat.shape)
-            for i in range(label_sat.shape[1]):
-                ax1.plot(ds['age'],label_sat[:,i], color='lightgray', alpha=0.1)
-
-        ax1.plot(ds.age,label_sat_average,color=colors[label2plot])
-        ax1.plot(min_age,min_sat,'ko')
-        # print(np.max(ax1.get_ylim()))
-        
-        # add labels for the vertical lines
-        ax1.text(HS1[0]-0.7*(HS1[0]-HS1[1]),np.max(ax1.get_ylim())-0.1*(np.max(ax1.get_ylim())-np.min(ax1.get_ylim())),'HS1',rotation=90)
-        ax1.text(BA[0]-0.7*(BA[0]-BA[1]),np.max(ax1.get_ylim())-0.1*(np.max(ax1.get_ylim())-np.min(ax1.get_ylim())),'BA',rotation=90)
-        ax1.text(YD[0]-0.7*(YD[0]-YD[1]),np.max(ax1.get_ylim())-0.1*(np.max(ax1.get_ylim())-np.min(ax1.get_ylim())),'YD',rotation=90)
-
-        ax1.set_xlabel('Age')
-        ax1.set_ylabel(f'{variable}')
-        #ax1.set_title('Class Label: '+str(label2plot))
-
+        ax.set_xlabel('Age (yr BP)')
+        ax.set_ylabel('Weighted Average SAT (°C)')
+        # turn off the x-axis label for all but the bottom subplot
+        if i < nclasses - 1:
+            ax.set_xlabel('')
+        # turn off the x-tick labels for all but the bottom subplot
+        if i < nclasses - 1:
+            ax.set_xticklabels('')
+    # adjust vertical spacing between subplots
+    # plt.subplots_adjust(hspace=0.3)
     plt.show()
+    return weighted_avg_curves
 
 
-# Bayesian changepoint detection
-
-import Rbeast as rb
-def find_cp_B(data,flip=True,plot=False,data_end=23900):
-    if flip:
-        data=data[::-1]
-
-
-    o = rb.beast(data, start=0,season='none')
-    if plot:
-        rb.plot(o)
-
-    cp=o.trend.cp[0]
-    cp=data_end-cp*200
-
-    return cp # reture the CP that corresponds to heighest probability
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# import numpy as np
-# import xarray as xr
-
-
-# # label2plot=[]
-# def find_labels_transition(ds,variable='sat'):
-
-#     min_age_list=[]
-#     labels=[]
-#     classlabel_age=[]
-#     sequence_class_age=[]
-
-#     ds['transition_age_of_label'] = xr.full_like(ds['sat'].isel(age=0), np.nan)
-#     for label in np.unique(ds['class_label']):
-#         # label2plot = label
-#         label_mask = ds['class_label'] == label
-#         label_sat = ds[variable].where(label_mask)
-#         label_sat_average = label_sat.mean(dim=('lat', 'lon'))
-#         min_age = ds['age'].isel(age=label_sat_average.argmin(dim='age'))
-#         # min_sat = label_sat_average.min(dim='age')
-#         min_age_list.append(min_age.values)
-#         labels.append(label)
-#         classlabel_age.append([label,min_age.values])
-        
-#         age_min_sat = xr.where(label_mask, min_age, np.nan)
-#         ds['transition_age_of_label'] = ds['transition_age_of_label'].where(~label_mask, age_min_sat)
-
-#     # compute sequence
-#     classlabel_age.sort(key=lambda x: x[1], reverse=True)
-#     ds['sequence'] = xr.full_like(ds['sat'].isel(age=0), np.nan)
-#     #min_age_list = np.unique(ds['transition_age_of_label'].values[~np.isnan(ds['transition_age_of_label'].values)])
-#     # min_age_list.sort()
-#     # print(min_age_list)
-#     for i in range(len(classlabel_age)):#enumerate(np.unique(ds['class_label'])):
-#         label_mask = ds['class_label'] == classlabel_age[i][0]
-#         sequence_class_age.append([i,classlabel_age[i][0],classlabel_age[i][1]])
-#         ds['sequence'] = xr.where(label_mask, i, ds['sequence'])
-#     ds['sequence'] = ds['sequence'].fillna(-2147483648).astype(int)
-
-#     return ds,sequence_class_age
-
-# ##############################################################################################
-# # function to plot the class labels on a map
-
-# import xarray as xr
+###########################################################################################
 # import matplotlib.pyplot as plt
 # import matplotlib.colors as mcolors
 # import cartopy.crs as ccrs
 # import cartopy.feature as cfeature
 # import numpy as np
 
+# def plot_weighted_average_curve(ds,dpi=100):
+#     unique_classes = np.unique(ds['class_label'].values)
+#     nclasses = len(unique_classes)
 
-# def plot_all_label_at_sequence(ds,variable='sat',plot_class=False):
-#     ds,sequence_class_age=find_labels_transition(ds,variable=variable)
-#     sequence_label = ds['sequence']
-#     sat_label = ds['class_label']
-#     # create a figure and axis
-#     nrow=len(np.unique(sat_label))
-#     fig = plt.figure(figsize=(16, 5*nrow),dpi=300)
+#     fig = plt.figure(figsize=(7, 4 * nclasses), constrained_layout=True, dpi=dpi)
+#     # colors = ['blue', 'pink', 'green', 'orange', 'purple', 'brown', 'red', 'gray', 'olive', 'cyan']
 
-#     for i in np.unique(ds['sequence']):
-#         label2plot=sequence_class_age[i][1]
-#         # add coastline and gridlines
-#         ax = fig.add_subplot(nrow, 2, 2*i+1, projection=ccrs.PlateCarree())
+#     cmap = plt.get_cmap('Accent', len(unique_classes))
+
+#     spec = fig.add_gridspec(ncols=3, nrows=nclasses, width_ratios=[1, 2, 2])
+
+#     for i, class_label in enumerate(unique_classes):
+#         class_mask = ds['class_label'] == class_label
+#         # cmap = mcolors.ListedColormap(['#ffffff', cmap[class_label]])
+
+#         # Spatial Distribution Plot
+#         ax = fig.add_subplot(spec[i, 0], projection=ccrs.Robinson())
 #         ax.add_feature(cfeature.COASTLINE)
-#         ax.gridlines()
+#         # ax.add_feature(cfeature.BORDERS, linestyle=':')
+#         # ds['class_label'].where(class_mask).plot(ax=ax, transform=ccrs.PlateCarree(), cmap=cmap(class_label), add_colorbar=False)
+#         ds['class_label'].where(class_mask).plot(ax=ax, transform=ccrs.PlateCarree(),
+#                                             cmap=cmap, vmin=0, vmax=nclasses,
+#                                             add_colorbar=False)
+#         # ax.set_title(f'Class {class_label} Distribution')
 
-#         # plot heatmap
-#         # colors = list(mcolors.TABLEAU_COLORS.values())
-#         # colors = colors[1:len(np.unique(sat_label))+1]
-#         cmap = mcolors.ListedColormap(['#ffffff', colors[label2plot]])
-#         im = ax.pcolormesh(ds.lon, ds.lat, sat_label==label2plot, transform=ccrs.PlateCarree(), cmap=cmap, shading='auto')   
-#         ax.set_xticks([-180, -120, -60, 0, 60, 120, 180], crs=ccrs.PlateCarree())
-#         ax.set_yticks([-90, -60, -30, 0, 30, 60, 90], crs=ccrs.PlateCarree())
-#         # add lon and lat labels
-#         ax.set_xlabel('Longitude')
-#         ax.set_ylabel('Latitude')
-#         ax.set_title(f'Sequence Label: {str(sequence_class_age[i][0])}, Class label: {str(sequence_class_age[i][1])}, Age of transition: {str(int(sequence_class_age[i][2]))}')
-
-
-#     ##########################################
-#     # calculate average sat data for each label
-
-#         label_mask = ds['class_label'] == label2plot
-#         label_sat = ds[variable].where(label_mask)
-#         label_sat_average = label_sat.mean(dim=('lat', 'lon'))
-#         min_age = ds['age'].isel(age=label_sat_average.argmin(dim='age'))
-#         min_sat = label_sat_average.min(dim='age')
-
-#         # create axis for the second plot
-#         ax1 = fig.add_subplot(nrow, 2, 2*i+2)
-
-#         # timing for climate transitions, data from Rasmussen et al., 2014, in b2k
-#         HS1=np.array([17480,14692])-50 # convert to b1950
-#         BA=np.array([14692,12896])-50
-#         YD=np.array([12896,11703])-50
-
-#         # plot the timing of climate transitions using vertical lines
-#         ax1.axvline(x=HS1[0],color='black',linestyle='--') # HS1
-#         ax1.axvline(x=HS1[1],color='black',linestyle='--') # HS1
-
-#         ax1.axvline(x=BA[0],color='black',linestyle='--') # BA
-#         ax1.axvline(x=BA[1],color='black',linestyle='--') # BA
-
-#         ax1.axvline(x=YD[0],color='black',linestyle='--') # YD
-#         ax1.axvline(x=YD[1],color='black',linestyle='--') # YD
-
-#         if plot_class:
-#             # plot all sat data in the same label as light grey lines
-#             # reshape the label_sat to a 2D array
-#             label_sat = label_sat.values
-#             label_sat = label_sat.reshape(label_sat.shape[0], label_sat.shape[1]*label_sat.shape[2])
-#             print(label_sat.shape)
-#             for i in range(label_sat.shape[1]):
-#                 ax1.plot(ds['age'],label_sat[:,i], color='lightgray', alpha=0.1)
-
-#         ax1.plot(ds.age,label_sat_average,color=colors[label2plot])
-#         ax1.plot(min_age,min_sat,'ko')
-#         # print(np.max(ax1.get_ylim()))
+#         # Weighted Average SAT Curve
+#         ax = fig.add_subplot(spec[i, 1:])
+#         ds_subset = ds.where(class_mask, drop=True)
         
-#         # add labels for the vertical lines
-#         ax1.text(HS1[0]-0.7*(HS1[0]-HS1[1]),np.max(ax1.get_ylim())-0.1*(np.max(ax1.get_ylim())-np.min(ax1.get_ylim())),'HS1',rotation=90)
-#         ax1.text(BA[0]-0.7*(BA[0]-BA[1]),np.max(ax1.get_ylim())-0.1*(np.max(ax1.get_ylim())-np.min(ax1.get_ylim())),'BA',rotation=90)
-#         ax1.text(YD[0]-0.7*(YD[0]-YD[1]),np.max(ax1.get_ylim())-0.1*(np.max(ax1.get_ylim())-np.min(ax1.get_ylim())),'YD',rotation=90)
+#         weights_broadcasted = ds_subset['weight'].broadcast_like(ds_subset['sat'])
+#         sum_weighted_sat = (ds_subset['sat'] * weights_broadcasted).sum(dim=['lat', 'lon'])
+#         sum_weight_sat = weights_broadcasted.sum(dim=['lat', 'lon'])
 
-#         ax1.set_xlabel('Age')
-#         ax1.set_ylabel(f'{variable}')
-#         #ax1.set_title('Class Label: '+str(label2plot))
+#         weighted_avg_sat = sum_weighted_sat / sum_weight_sat
+#         # ax.plot(ds['age'], weighted_avg_sat, color=cmap[class_label])
+#         ax.plot(ds['age'], weighted_avg_sat, color=cmap(class_label))
+#         # invert the x-axis
+#         ax.invert_xaxis()
+    
+#         ax.set_title(f'Class {class_label} Weighted Average SAT Curve')
+
+#         # Add climate transitions timing
+#         HS1 = np.array([17480, 14692]) - 50  # convert to b1950
+#         BA = np.array([14692, 12896]) - 50
+#         YD = np.array([12896, 11703]) - 50
+
+#         for period, name in zip([HS1, BA, YD], ["HS1", "BA", "YD"]):
+#             ax.axvline(x=period[0], color='black', linestyle='--')
+#             ax.axvline(x=period[1], color='black', linestyle='--')
+#             ax.text(period.mean(), np.max(ax.get_ylim()), name, rotation=90, verticalalignment='top')
+
+#         ax.set_xlabel('Age (yr BP)')
+#         ax.set_ylabel('SAT (°C)')
 
 #     plt.show()
 
+###########################################################################################
