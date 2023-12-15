@@ -86,11 +86,16 @@ def GMM4EOFS(data, ds_sat,n_components=4):
 
     # get the predicted class labels for each data point
     class_labels = gmm_model.predict(data)
+    probabilities = gmm_model.predict_proba(data)
+    max_prob = np.amax(probabilities, axis=1)
+
 
     # new_ds=ds_sat.copy()
     # add the class labels to the xarray dataset
     ds=ds_sat.copy()
     ds['class_label'] = (('lat', 'lon'), class_labels.reshape(sat_shape[1], sat_shape[2]))
+    reshaped_probs = max_prob.reshape(sat_shape[1], sat_shape[2])
+
 
     unique_labels = np.unique(class_labels)
     # cmap = plt.get_cmap('Accent', len(unique_labels))
@@ -133,7 +138,7 @@ def GMM4EOFS(data, ds_sat,n_components=4):
     plt.tight_layout()
     plt.show()
 
-    return ds
+    return ds,reshaped_probs
 
 
 ###############################################################################################
