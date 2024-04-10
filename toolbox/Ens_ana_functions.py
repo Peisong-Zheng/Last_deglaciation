@@ -42,6 +42,12 @@ def plot_ens_labels(labels_Ens, figsize=(10, 6), dpi=300, panel_label='a'):
 
     # Create the heatmap with adjusted colorbar
     ax = sns.heatmap(label_matrix, cmap=cmap, cbar_kws={'label': 'Class Label', 'ticks': ticks, 'boundaries': boundaries, 'spacing': 'uniform'})
+
+    # Adjust colorbar tick labels
+    cbar = ax.collections[0].colorbar
+    # cbar.set_ticks(ticks + 0.5)  # Set to middle of each segment
+    cbar.set_ticklabels(ticks + 1)  # Increment labels by 1
+
     plt.xlabel('Grid Index')
     plt.ylabel('Ens Index')
 

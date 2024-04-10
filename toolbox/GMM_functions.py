@@ -72,14 +72,14 @@ import xarray as xr
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
-def GMM4EOFS(data, ds_sat,n_components=4):
+def GMM4EOFS(data, ds_sat,n_components=4,init_params='kmeans'):
     # colors = ['blue', 'pink', 'green', 'orange', 'purple', 'brown', 'red', 'gray', 'olive', 'cyan']
     # colors=[(127, 201, 127),(190, 174, 212),(253, 192, 134),(255, 255, 153),(56, 108, 176),(240, 2, 127),(191, 91, 23),(102, 102, 102)]
     # n_components=5
     sat_shape=ds_sat['sat'].shape
 
     # create a 2D GMM model
-    gmm_model = GaussianMixture(n_components=n_components, covariance_type='full')
+    gmm_model = GaussianMixture(n_components=n_components, covariance_type='full',init_params=init_params)
 
     # fit the model to the two columns of PCA scores
     gmm_model.fit(data)
