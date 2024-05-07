@@ -282,6 +282,13 @@ def find_cp(data, age,interval_L_indx=10,rb_plot=False,avg_plot=False,avg_plot_t
     
 
     cps = o.trend.cp
+
+    # sort the cpCI according to the cps
+    cpCI=o.trend.cpCI
+    cpCI_cps_stack=np.column_stack((cpCI,cps))
+    # sort the cpCI_cps_stack according to the last column in asending order
+    cpCI_cps_stack_sorted=cpCI_cps_stack[cpCI_cps_stack[:,1].argsort()]
+
     # remove nan
     cps = cps[~np.isnan(cps)]
     # sort the cps
@@ -296,10 +303,29 @@ def find_cp(data, age,interval_L_indx=10,rb_plot=False,avg_plot=False,avg_plot_t
     print('selected_cp_index:', selected_cp_index)
 
     selected_cp_age=start_age - cps[selected_cp_index]*200
+    selected_cp_age_CI=start_age-cpCI_cps_stack_sorted[selected_cp_index]*200
+    # get the first two data in selected_cp_age_CI
+    selected_cp_age_CI=selected_cp_age_CI[:2]
+
+    # cp_age_all = [start_age - cp*200 for cp in cps]
     
 
-
+    # get the CPs with the highest(top 3) cpOccPr
     cpOccPr = o.trend.cpOccPr    
+
+    cpOccPr_at_cps=[cpOccPr[int(cp)] for cp in cps]
+    # put cpOccPr_at_cps and cps into a array with two columns
+    cpOccPr_cps_stack=np.column_stack((cpOccPr_at_cps,cps))
+    # in cpOccPr_cps_stack, sort the first column in descending order and change the order of the second column accordingly
+    cpOccPr_cps_stack_sorted=cpOccPr_cps_stack[cpOccPr_cps_stack[:,0].argsort()[::-1]]
+    # get the first 3 of the second column
+    cps_top3=cpOccPr_cps_stack_sorted[:3,1]
+
+    cp_age_all = [start_age - cp*200 for cp in cps_top3]
+
+
+
+
     # flip the cpOccPr
     cpOccPr = cpOccPr[::-1]
     
@@ -330,6 +356,8 @@ def find_cp(data, age,interval_L_indx=10,rb_plot=False,avg_plot=False,avg_plot_t
     'slpSgnPosPr': slpSgnPosPr,
     'slpSgnZeroPr': slpSgnZeroPr,
     'cp_age': selected_cp_age,
+    'cp_age_CI': selected_cp_age_CI,
+    'cp_age_all': cp_age_all,
     'age': age,
     }
 

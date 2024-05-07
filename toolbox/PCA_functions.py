@@ -219,7 +219,7 @@ def plot_eof_map(eofs, lat, lon):
         raise ValueError("The length of 'eofs' must be equal to len(lat) * len(lon).")
 
     # Reshape EOF1 and EOF2 to 2D array
-    eof1 = eofs[:, 0].reshape(len(lat), len(lon))*-1
+    eof1 = eofs[:, 0].reshape(len(lat), len(lon))
     eof2 = eofs[:, 1].reshape(len(lat), len(lon))
 
     # create a figure and axes

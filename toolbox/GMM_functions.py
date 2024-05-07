@@ -168,12 +168,14 @@ def plot_labels(ds,label_var_name='class_label'):
     unique_labels = np.unique(sat_label)
     # cmap = plt.get_cmap('Accent', len(unique_labels))
 
-    if len(unique_labels) <= 4:
+    if len(unique_labels) <= 5:
         custom_colors = [
         (0.4980392156862745, 0.788235294117647, 0.4980392156862745),
         (0.9921568627450981, 0.7529411764705882, 0.5254901960784314),
         (0.9411764705882353, 0.00784313725490196, 0.4980392156862745),
-        (0.27450980392156865, 0.5098039215686274, 0.7058823529411765),]
+        (0.27450980392156865, 0.5098039215686274, 0.7058823529411765),
+        (0.4, 0.4, 0.4),
+        ]
 
         # Create a ListedColormap object with your custom colors
         cmap = ListedColormap(custom_colors)   
@@ -208,12 +210,14 @@ def plot_weighted_average_curve(ds, label_var_name='class_label',dpi=100):
     unique_classes = np.unique(ds[label_var_name].values)
     nclasses = len(unique_classes)
 
-    if nclasses <= 4:
+    if nclasses <= 5:
         custom_colors = [
         (0.4980392156862745, 0.788235294117647, 0.4980392156862745),
         (0.9921568627450981, 0.7529411764705882, 0.5254901960784314),
         (0.9411764705882353, 0.00784313725490196, 0.4980392156862745),
-        (0.27450980392156865, 0.5098039215686274, 0.7058823529411765),]
+        (0.27450980392156865, 0.5098039215686274, 0.7058823529411765),
+        (0.4, 0.4, 0.4),
+        ]
 
         # Create a ListedColormap object with your custom colors
         cmap = ListedColormap(custom_colors)   
