@@ -262,7 +262,7 @@ import numpy as np
 import Rbeast as rb
 import matplotlib.pyplot as plt
 
-def find_cp(data, age,interval_L_indx=10,rb_plot=False,avg_plot=False,avg_plot_title=None):
+def find_cp(data, age,age_step=200, interval_L_indx=10,rb_plot=False,avg_plot=False,avg_plot_title=None):
 
     # cut the data according to interval_L_indx
     data=data[interval_L_indx:]
@@ -302,8 +302,8 @@ def find_cp(data, age,interval_L_indx=10,rb_plot=False,avg_plot=False,avg_plot_t
     selected_cp_index = np.argmin(np.abs(cps-pospr_diff_max_index))
     print('selected_cp_index:', selected_cp_index)
 
-    selected_cp_age=start_age - cps[selected_cp_index]*200
-    selected_cp_age_CI=start_age-cpCI_cps_stack_sorted[selected_cp_index]*200
+    selected_cp_age=start_age - cps[selected_cp_index]*age_step
+    selected_cp_age_CI=start_age-cpCI_cps_stack_sorted[selected_cp_index]*age_step
     # get the first two data in selected_cp_age_CI
     selected_cp_age_CI=selected_cp_age_CI[:2]
 
@@ -321,7 +321,7 @@ def find_cp(data, age,interval_L_indx=10,rb_plot=False,avg_plot=False,avg_plot_t
     # get the first 3 of the second column
     cps_top3=cpOccPr_cps_stack_sorted[:3,1]
 
-    cp_age_all = [start_age - cp*200 for cp in cps_top3]
+    cp_age_all = [start_age - cp*age_step for cp in cps_top3]
 
 
 
