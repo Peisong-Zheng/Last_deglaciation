@@ -307,6 +307,7 @@ def find_cp(data, age,age_step=200, interval_L_indx=10,rb_plot=False,avg_plot=Fa
     # get the first two data in selected_cp_age_CI
     selected_cp_age_CI=selected_cp_age_CI[:2]
 
+    # cp_CI_all = start_age-cpCI_cps_stack_sorted[cps]*age_step
     # cp_age_all = [start_age - cp*200 for cp in cps]
     
 
@@ -358,6 +359,7 @@ def find_cp(data, age,age_step=200, interval_L_indx=10,rb_plot=False,avg_plot=Fa
     'cp_age': selected_cp_age,
     'cp_age_CI': selected_cp_age_CI,
     'cp_age_all': cp_age_all,
+    'cp_CI_all': cpCI_cps_stack_sorted,
     'age': age,
     }
 
