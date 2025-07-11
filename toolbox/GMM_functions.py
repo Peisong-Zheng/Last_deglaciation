@@ -109,6 +109,8 @@ def GMM4EOFS(data, ds_sat,n_components=4,init_params='kmeans'):
     # Create a ListedColormap object with your custom colors
     cmap = ListedColormap(custom_colors)
 
+    if n_components >4:
+        cmap = plt.get_cmap('Accent', len(unique_labels))
 
     # plot the results
     fig, ax = plt.subplots(1, 2, figsize=(8, 4), dpi=300)
@@ -168,7 +170,7 @@ def plot_labels(ds,label_var_name='class_label'):
     unique_labels = np.unique(sat_label)
     # cmap = plt.get_cmap('Accent', len(unique_labels))
 
-    if len(unique_labels) <= 5:
+    if len(unique_labels) <= 4:
         custom_colors = [
         (0.4980392156862745, 0.788235294117647, 0.4980392156862745),
         (0.9921568627450981, 0.7529411764705882, 0.5254901960784314),
@@ -283,6 +285,57 @@ def plot_weighted_average_curve(ds, label_var_name='class_label',dpi=100):
     # plt.subplots_adjust(hspace=0.3)
     plt.show()
     return weighted_avg_curves
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.mixture import GaussianMixture
+
+
+def gmm_aic_curve(data,
+                  max_components=10,
+                  covariance_type='full',
+                  init_params='kmeans',
+                  random_state=0):
+    """
+    Fit GMMs with 1…max_components clusters, return AIC
+    and ΔAIC calculated with np.diff(AIC).
+
+    Returns
+    -------
+    aic : (max_components,) ndarray
+        AIC for each k = 1…max_components.
+    delta_aic : (max_components-1,) ndarray
+        AIC(k) – AIC(k-1)  (so length = max_components-1).
+    """
+    aic = []
+    for k in range(1, max_components + 1):
+        gmm = GaussianMixture(n_components=k,
+                              covariance_type=covariance_type,
+                              init_params=init_params,
+                              random_state=random_state)
+        gmm.fit(data)
+        aic.append(gmm.aic(data))
+
+    aic = np.array(aic)
+    delta_aic = np.diff(aic)      # consecutive differences
+    return aic, delta_aic
+
 
 
 ###########################################################################################
