@@ -210,57 +210,6 @@ def plot_eof_scatter(eofs):
 
 
 
-
-# def plot_eof_map(eofs, lat, lon):
-#     if eofs.shape[1] < 2:
-#         raise ValueError("The input 'eofs' must have at least 2 columns (EOFs).")
-    
-#     if len(eofs) != len(lat) * len(lon):
-#         raise ValueError("The length of 'eofs' must be equal to len(lat) * len(lon).")
-
-#     # Reshape EOF1 and EOF2 to 2D array
-#     eof1 = eofs[:, 0].reshape(len(lat), len(lon))
-#     eof2 = eofs[:, 1].reshape(len(lat), len(lon))
-
-#     # create a figure and axes
-#     fig, axs = plt.subplots(2, 1, figsize=(8, 9), subplot_kw=dict(projection=ccrs.Robinson()), dpi=600)
-
-#     letters = ['a', 'b']                               # panel labels
-
-#     for i, eof in enumerate([eof1, eof2]):
-#         ax = axs[i]
-
-#         # coastlines + silent gridlines (no labels)
-#         ax.add_feature(cfeature.COASTLINE, linewidth=0.6)
-#         gl = ax.gridlines(draw_labels=False, color='gray',
-#                         alpha=0.5, linestyle='--')    # << labels off
-
-#         # the heat-map
-#         cmap = plt.get_cmap('coolwarm')
-#         im = ax.pcolormesh(lon, lat, eof, transform=ccrs.PlateCarree(),
-#                         cmap=cmap, vmin=-0.04, vmax=0.04, shading='auto')
-
-#         # panel letter (upper-left, just outside frame)
-#         ax.text(0.1, 1.05, letters[i], transform=ax.transAxes,
-#                 fontsize=14, fontweight='bold', va='top', ha='right')
-
-#         ax.set_title(f'EOF {i+1}')
-
-#         # colour-bar
-#         cbar = plt.colorbar(im, ax=ax, orientation='vertical',
-#                             pad=0.05, shrink=0.5)
-#         cbar.ax.set_ylabel('Loading')
-
-
-#     # adjust the space between subplots
-#     fig.subplots_adjust(hspace=-0.2)
-#     # plt.tight_layout()
-
-#     plt.show()
-#     return fig, axs
-
-
-
 def plot_eof_map(eofs, lat, lon):
     # … (sanity checks unchanged) …
 
