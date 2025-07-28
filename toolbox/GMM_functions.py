@@ -207,7 +207,7 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import numpy as np
 
-def plot_weighted_average_curve(ds, label_var_name='class_label',dpi=100):
+def plot_weighted_average_curve(ds, label_var_name='class_label',xlim=(None, None), label_add_one=False, dpi=100):
     unique_classes = np.unique(ds[label_var_name].values)
     nclasses = len(unique_classes)
 
@@ -254,9 +254,17 @@ def plot_weighted_average_curve(ds, label_var_name='class_label',dpi=100):
 
         ax.plot(ds['age'], weighted_avg_sat, color=cmap(class_label))
         # set x limits to match the age
-        ax.set_xlim(ds['age'].min(), ds['age'].max())
+        if xlim[0] is not None and xlim[1] is not None:
+            ax.set_xlim(xlim[0], xlim[1])
+        else:
+            ax.set_xlim(ds['age'].min(), ds['age'].max())
+
         ax.invert_xaxis()
-        ax.set_title(f'Class {class_label}')
+        if label_add_one:
+            ax.set_title(f'Class {class_label + 1}')
+        else:
+            ax.set_title(f'Class {class_label}')
+        
 
         age_min=ds['age'].min()
 
